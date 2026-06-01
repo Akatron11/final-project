@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+asyncpg
+pydantic[email]
+pydantic-settings
+cryptography
+qrcode[pil]
+redis[asyncio]
+Pillow
