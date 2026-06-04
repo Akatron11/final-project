@@ -1,9 +1,21 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.database import engine, Base
 from app.routers import auth, gyms, members, plans, subscriptions, credentials, devices, verify, access_logs, occupancy, dashboard
+import app.models  # noqa: F401 — registers all models with Base
 
-app = FastAPI(title="GymGate API", version="1.0.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+
+
+app = FastAPI(title="GymGate API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
