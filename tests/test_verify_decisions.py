@@ -22,7 +22,7 @@ async def verify(client: AsyncClient, api_key: str, credential_value: str, actio
 
 
 async def test_granted(client: AsyncClient, seed, make_member):
-    _, credential_value = await make_member(status=SubscriptionStatus.active)
+    _, credential_value = await make_member(seed, status=SubscriptionStatus.active)
 
     resp = await verify(client, seed["api_key"], credential_value)
 
@@ -38,7 +38,7 @@ async def test_denied_unknown_credential(client: AsyncClient, seed):
 
 
 async def test_denied_flagged(client: AsyncClient, seed, make_member):
-    _, credential_value = await make_member(is_flagged=True, flag_reason="Stolen card")
+    _, credential_value = await make_member(seed, is_flagged=True, flag_reason="Stolen card")
 
     resp = await verify(client, seed["api_key"], credential_value)
 
@@ -51,6 +51,7 @@ async def test_denied_flagged(client: AsyncClient, seed, make_member):
 
 async def test_denied_expired(client: AsyncClient, seed, make_member):
     _, credential_value = await make_member(
+        seed,
         status=SubscriptionStatus.active,
         end_date=date.today() - timedelta(days=1),
     )
@@ -62,7 +63,7 @@ async def test_denied_expired(client: AsyncClient, seed, make_member):
 
 
 async def test_denied_suspended(client: AsyncClient, seed, make_member):
-    _, credential_value = await make_member(status=SubscriptionStatus.suspended)
+    _, credential_value = await make_member(seed, status=SubscriptionStatus.suspended)
 
     resp = await verify(client, seed["api_key"], credential_value)
 
@@ -71,7 +72,7 @@ async def test_denied_suspended(client: AsyncClient, seed, make_member):
 
 
 async def test_denied_frozen(client: AsyncClient, seed, make_member):
-    _, credential_value = await make_member(status=SubscriptionStatus.frozen)
+    _, credential_value = await make_member(seed, status=SubscriptionStatus.frozen)
 
     resp = await verify(client, seed["api_key"], credential_value)
 

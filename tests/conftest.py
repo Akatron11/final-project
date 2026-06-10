@@ -66,38 +66,47 @@ async def client(db):
     app.dependency_overrides.clear()
 
 
-@pytest_asyncio.fixture
-async def seed(db):
+@pytest.fixture
+def make_gym(db):
     """Bir gym, bir plan ve bir gate device oluşturur, /verify testleri için ortak veri sağlar."""
-    gym = Gym(name="TestGym", address="Istanbul", email="seed@testgym.com", max_capacity=10)
-    db.add(gym)
-    await db.flush()
 
-    plan = MembershipPlan(gym_id=gym.id, name="Standard", duration_days=30, price=100)
-    db.add(plan)
+    async def _make_gym(name="TestGym", email=None):
+        gym = Gym(name=name, address="Istanbul", email=email or f"{uuid.uuid4()}@testgym.com", max_capacity=10)
+        db.add(gym)
+        await db.flush()
 
-    api_key = "testapikey123456"
-    device = GateDevice(
-        gym_id=gym.id,
-        name="Gate A",
-        api_key_hash=pwd_context.hash(api_key),
-        api_key_prefix=api_key[:8],
-    )
-    db.add(device)
-    await db.commit()
+        plan = MembershipPlan(gym_id=gym.id, name="Standard", duration_days=30, price=100)
+        db.add(plan)
 
-    return {"gym": gym, "plan": plan, "device": device, "api_key": api_key}
+        api_key = str(uuid.uuid4()).replace("-", "")
+        device = GateDevice(
+            gym_id=gym.id,
+            name="Gate A",
+            api_key_hash=pwd_context.hash(api_key),
+            api_key_prefix=api_key[:8],
+        )
+        db.add(device)
+        await db.commit()
+
+        return {"gym": gym, "plan": plan, "device": device, "api_key": api_key}
+
+    return _make_gym
+
+
+@pytest_asyncio.fixture
+async def seed(make_gym):
+    return await make_gym()
 
 
 @pytest.fixture
-def make_member(db, seed):
+def make_member(db):
     """Verilen abonelik durumuna sahip bir üye + NFC kimlik bilgisi oluşturur, kart numarasını döner."""
 
-    async def _make_member(status=SubscriptionStatus.active, end_date=None,
+    async def _make_member(gym, status=SubscriptionStatus.active, end_date=None,
                             is_flagged=False, flag_reason=None, is_active=True,
                             with_subscription=True):
         member = Member(
-            gym_id=seed["gym"].id,
+            gym_id=gym["gym"].id,
             first_name="Test",
             last_name="User",
             email=f"{uuid.uuid4()}@test.com",
@@ -110,7 +119,7 @@ def make_member(db, seed):
 
         credential_value = str(uuid.uuid4())
         db.add(Credential(
-            gym_id=seed["gym"].id,
+            gym_id=gym["gym"].id,
             member_id=member.id,
             credential_type="nfc",
             credential_value=credential_value,
@@ -118,9 +127,9 @@ def make_member(db, seed):
 
         if with_subscription:
             db.add(Subscription(
-                gym_id=seed["gym"].id,
+                gym_id=gym["gym"].id,
                 member_id=member.id,
-                plan_id=seed["plan"].id,
+                plan_id=gym["plan"].id,
                 start_date=date.today() - timedelta(days=10),
                 end_date=end_date or (date.today() + timedelta(days=20)),
                 status=status,
