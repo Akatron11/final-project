@@ -14,23 +14,21 @@ from app.main import app
 from app.database import Base, get_db
 
 TEST_DB_URL = os.environ["DATABASE_URL"]
-engine = create_async_engine(TEST_DB_URL, echo=False)
-TestSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-
-
-@pytest_asyncio.fixture(scope="session", autouse=True)
-async def create_tables():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    yield
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
 
 
 @pytest_asyncio.fixture
 async def db():
+    engine = create_async_engine(TEST_DB_URL, echo=False)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    TestSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
     async with TestSessionLocal() as session:
         yield session
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+    await engine.dispose()
 
 
 @pytest_asyncio.fixture

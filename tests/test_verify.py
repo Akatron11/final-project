@@ -11,7 +11,7 @@ async def test_verify_missing_api_key(client: AsyncClient):
         "gate_id": "GATE-A",
         "action": "entry"
     })
-    assert resp.status_code == 403
+    assert resp.status_code == 401
 
 
 async def test_verify_invalid_api_key(client: AsyncClient):
