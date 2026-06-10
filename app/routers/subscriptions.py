@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, timedelta, datetime, timezone
+from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -65,14 +65,7 @@ async def freeze(sub_id: uuid.UUID, admin: Admin = Depends(get_current_admin), d
     if subscription.status != SubscriptionStatus.active:
         raise HTTPException(status_code=400, detail="Only active subscriptions can be frozen")
 
-    plan_result = await db.execute(select(MembershipPlan).where(MembershipPlan.id == subscription.plan_id))
-    plan = plan_result.scalar_one_or_none()
-    if plan and subscription.freeze_count >= plan.max_freezes:
-        raise HTTPException(status_code=400, detail="Freeze limit reached")
-
     subscription.status = SubscriptionStatus.frozen
-    subscription.frozen_at = datetime.now(timezone.utc)
-    subscription.freeze_count += 1
     await db.commit()
     await db.refresh(subscription)
     return subscription
@@ -89,12 +82,7 @@ async def unfreeze(sub_id: uuid.UUID, admin: Admin = Depends(get_current_admin),
     if subscription.status != SubscriptionStatus.frozen:
         raise HTTPException(status_code=400, detail="Subscription is not frozen")
 
-    if subscription.frozen_at:
-        frozen_days = (date.today() - subscription.frozen_at.date()).days
-        subscription.end_date = subscription.end_date + timedelta(days=frozen_days)
-
     subscription.status = SubscriptionStatus.active
-    subscription.frozen_at = None
     await db.commit()
     await db.refresh(subscription)
     return subscription

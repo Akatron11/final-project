@@ -15,7 +15,6 @@ class MembershipPlan(Base):
     description = Column(Text)
     duration_days = Column(Integer, nullable=False)
     price = Column(Numeric(10, 2), nullable=False)
-    max_freezes = Column(Integer, default=1)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

@@ -1,6 +1,6 @@
 import uuid
 import enum
-from sqlalchemy import Column, Integer, Date, DateTime, ForeignKey, Enum
+from sqlalchemy import Column, Date, DateTime, ForeignKey, Enum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
@@ -24,8 +24,6 @@ class Subscription(Base):
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
     status = Column(Enum(SubscriptionStatus), default=SubscriptionStatus.active)
-    freeze_count = Column(Integer, default=0)
-    frozen_at = Column(DateTime(timezone=True))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     member = relationship("Member", back_populates="subscriptions")

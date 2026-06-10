@@ -133,8 +133,7 @@ Creates a new plan.
   "name": "Monthly Membership",
   "description": "30 days unlimited access",
   "duration_days": 30,
-  "price": 500.00,
-  "max_freezes": 1
+  "price": 500.00
 }
 ```
 

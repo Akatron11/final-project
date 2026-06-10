@@ -6,7 +6,6 @@ class PlanCreate(BaseModel):
     description: str | None = None
     duration_days: int
     price: float
-    max_freezes: int = 1
 
 
 class PlanUpdate(BaseModel):
@@ -14,4 +13,3 @@ class PlanUpdate(BaseModel):
     description: str | None = None
     duration_days: int | None = None
     price: float | None = None
-    max_freezes: int | None = None
