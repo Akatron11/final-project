@@ -48,8 +48,11 @@
      sadeleştirmesinden (bu oturum öncesi) önceki kodu çalıştırıyor (`/subscriptions`
      yanıtında hâlâ `freeze_count`/`frozen_at` görünüyor). Gerekirse `docker compose
      up --build` ile yeniden build edilmeli.
-6. Repo yapısının brief'teki "ayrı repo" şartına uygunluğunun teyidi
-   (final proje ayrı repo olmalı, frontend de ayrı repo olmalı).
+6. ~~Repo yapısının brief'teki "ayrı repo" şartına uygunluğunun teyidi~~ — Tamamlandı
+   (2026-06-11). Brief'te "ayrı repo" diye net bir ifade yok; sadece "Your responsibility
+   is the backend only, frontend AI ile ayrıca üretilecek" deniyor. Repo'da `git ls-files`
+   ile frontend kalıntısı (frontend/, client/, .jsx/.tsx, package.json vb.) aranmadı —
+   bulunmadı. Repo sadece backend içeriyor, uygun.
 
 ## Notlar / Kararlar
 - **Mevcut kod CLAUDE.md kurallarına göre incelendi.** Genel yapı brief'e uygun ve
@@ -65,6 +68,7 @@
   (bkz. sohbet geçmişi).
 
 ## Sıradaki Oturumda Yapılacak İlk İş
-- Render hesabı/repo durumu netleşince madde 5'in deploy kısmına dönülecek.
-- Madde 6: Repo yapısının brief'teki "ayrı repo" şartına uygunluğunun teyidi.
+- Eksikler listesindeki tüm maddeler tamamlandı (Render deploy kullanıcı tercihiyle
+  şimdilik hariç). Render hesabı/repo durumu netleşince madde 5'in deploy kısmına
+  dönülecek.
 - (İsteğe bağlı) `docker compose up --build` ile imajın güncel kodla yeniden build edilmesi.
