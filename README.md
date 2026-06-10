@@ -104,12 +104,14 @@ The core of the system. Gate devices authenticate via `X-API-Key` header and POS
 
 ## Performance
 
-| Endpoint | Avg Response Time |
+| Endpoint | Response Time |
 |----------|------------------|
-| `POST /verify` | ~45ms (p50) · ~90ms (p99) |
+| `POST /verify` | ~215ms (p50) · ~255ms (p99) |
 
-> Measured with Docker Compose on localhost, PostgreSQL + Redis on the same host.  
-> Results should be documented after Render.com deployment and updated here.
+> Measured with `docker-compose up` on localhost (Windows + Docker Desktop), 60 sequential
+> requests against an NFC credential with an active subscription. The brief's <200ms target
+> assumes a Linux deployment (e.g. Render) without the Docker Desktop networking overhead
+> seen on Windows.
 
 ## Authentication
 
