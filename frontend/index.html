@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GymGate</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>GymGate</h1>
+    <div id="login-status"></div>
+  </header>
+
+  <!-- Login -->
+  <section id="login-section">
+    <h2>Admin Login</h2>
+    <form id="login-form">
+      <input type="email" id="login-email" placeholder="Email" required>
+      <input type="password" id="login-password" placeholder="Password" required>
+      <button type="submit">Log In</button>
+    </form>
+    <p id="login-message"></p>
+  </section>
+
+  <!-- Main app, hidden until login -->
+  <div id="app" class="hidden">
+
+    <!-- Occupancy -->
+    <section id="occupancy-section">
+      <h2>Occupancy</h2>
+      <p id="occupancy-text">Loading...</p>
+    </section>
+
+    <!-- Member registration -->
+    <section id="member-section">
+      <h2>Add New Member</h2>
+      <form id="member-form">
+        <label for="member-first-name">First Name</label>
+        <input type="text" id="member-first-name" placeholder="First Name"
+               pattern="[A-Za-zÇçĞğİıÖöŞşÜü ]{2,50}"
+               title="Letters only (2-50 characters)" required>
+
+        <label for="member-last-name">Last Name</label>
+        <input type="text" id="member-last-name" placeholder="Last Name"
+               pattern="[A-Za-zÇçĞğİıÖöŞşÜü ]{2,50}"
+               title="Letters only (2-50 characters)" required>
+
+        <label for="member-email">Email</label>
+        <input type="email" id="member-email" placeholder="example@mail.com" required>
+
+        <label for="member-phone">Phone</label>
+        <input type="tel" id="member-phone" placeholder="+905551234567" required>
+
+        <label for="member-dob">Date of Birth</label>
+        <input type="date" id="member-dob" required>
+
+        <label for="member-emergency">Emergency Contact</label>
+        <input type="tel" id="member-emergency" placeholder="+905551234567" required>
+
+        <button type="submit">Add Member</button>
+      </form>
+      <p id="member-message"></p>
+    </section>
+
+    <!-- Plans & Subscriptions -->
+    <section id="plans-section">
+      <h2>Plans &amp; Subscriptions</h2>
+
+      <h3>Create New Plan</h3>
+      <form id="plan-form">
+        <label for="plan-name">Plan Name</label>
+        <input type="text" id="plan-name" placeholder="Monthly Membership" required>
+
+        <label for="plan-description">Description</label>
+        <input type="text" id="plan-description" placeholder="30 days unlimited access">
+
+        <label for="plan-duration">Duration (days)</label>
+        <input type="number" id="plan-duration" min="1" value="30" required>
+
+        <label for="plan-price">Price</label>
+        <input type="number" id="plan-price" min="0" step="0.01" value="500" required>
+
+        <button type="submit">Create Plan</button>
+      </form>
+      <p id="plan-message"></p>
+
+      <h3>Assign Plan to Member</h3>
+      <form id="subscription-form">
+        <label for="sub-member-select">Member</label>
+        <select id="sub-member-select"></select>
+
+        <label for="sub-plan-select">Plan</label>
+        <select id="sub-plan-select"></select>
+
+        <label for="sub-start-date">Start Date</label>
+        <input type="date" id="sub-start-date" required>
+
+        <button type="submit">Assign Plan</button>
+      </form>
+      <p id="subscription-message"></p>
+
+      <h3>Subscription Status</h3>
+      <select id="status-member-select"></select>
+      <button id="status-check-btn">Show Status</button>
+      <div id="subscription-status"></div>
+    </section>
+
+    <!-- QR code -->
+    <section id="qr-section">
+      <h2>Generate QR Code</h2>
+      <select id="qr-member-select"></select>
+      <button id="qr-generate-btn">Generate QR Code</button>
+      <div id="qr-result"></div>
+    </section>
+
+    <!-- Gate / turnstile simulation -->
+    <section id="gate-section">
+      <h2>Gate Simulator (Demo)</h2>
+      <p>Scan the QR code shown on the member's phone with the camera to verify entry/exit.</p>
+      <label for="gate-id">Gate / Turnstile Name</label>
+      <input type="text" id="gate-id" value="Main Entrance">
+
+      <label for="gate-action">Action</label>
+      <select id="gate-action">
+        <option value="entry">Entry</option>
+        <option value="exit">Exit</option>
+      </select>
+
+      <button id="gate-start-btn">Start Camera</button>
+      <button id="gate-stop-btn" class="hidden">Stop Camera</button>
+
+      <div id="qr-reader"></div>
+      <div id="gate-result"></div>
+    </section>
+
+    <!-- Access logs -->
+    <section id="logs-section">
+      <h2>Access Logs</h2>
+      <button id="refresh-logs-btn">Refresh</button>
+      <table id="logs-table">
+        <thead>
+          <tr>
+            <th>Date/Time</th>
+            <th>Gate</th>
+            <th>Type</th>
+            <th>Action</th>
+            <th>Decision</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+  </div>
+
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

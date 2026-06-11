@@ -2,6 +2,8 @@
 
 Backend API for a smart gym access control and member management system. Gate devices scan QR codes or NFC tags and receive a grant/deny decision in under 200ms.
 
+**Live API:** https://final-project-w7ms.onrender.com/docs
+
 ## Tech Stack
 
 - **FastAPI** — async REST API
@@ -121,6 +123,29 @@ The core of the system. Gate devices authenticate via `X-API-Key` header and POS
 ## Multi-Tenancy
 
 Every table has a `gym_id` column. All queries are automatically scoped to the authenticated admin's gym. QR payloads are Fernet-encrypted and contain the `gym_id` — a QR issued by Gym A is rejected at Gym B at the decryption/tenant-check step.
+
+## Frontend (Demo)
+
+A simple HTML/CSS/JS admin panel lives in `frontend/` and talks directly to the
+live Render API (CORS is open). It covers:
+
+- Admin login (JWT stored in `localStorage`)
+- Member registration (with input validation)
+- Plan creation & assigning a plan/subscription to a member, viewing subscription status
+- QR code generation for a member
+- **Gate/turnstile simulator** — scans a member's QR code via the device camera
+  (using [html5-qrcode](https://github.com/mebjas/html5-qrcode)) and calls
+  `POST /verify` with a demo gate device API key, showing the GRANTED/DENIED result
+- Access log table and a real-time occupancy counter (polled every 5s)
+
+**Running it:** the QR scanner needs camera access, which browsers only allow on
+`https://` or `localhost`. Serve the folder locally instead of opening the file directly:
+
+```bash
+cd frontend
+python -m http.server 5500
+# open http://localhost:5500/index.html
+```
 
 ## Running Tests
 

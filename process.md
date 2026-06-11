@@ -37,9 +37,18 @@
      `tests/test_verify_security.py`. `make_member`/`seed` fixture'ları `make_gym`
      üzerine refactor edildi (birden fazla gym oluşturabilmek için).
    - Madde 4 tamamlandı. Toplam 12/12 test geçiyor.
-5. Render'a deploy + gerçek `/verify` response time ölçümü + README güncellemesi.
-   - Render deploy: **kullanıcı tercihiyle şimdilik atlandı** (hesap/repo durumu netleşince
-     tekrar gündeme gelecek).
+5. ~~Render'a deploy + gerçek `/verify` response time ölçümü + README güncellemesi.~~
+   - **Render deploy**: Tamamlandı (2026-06-11). Web Service (Docker) +
+     PostgreSQL (free) + Key Value/Redis (free), hepsi Oregon bölgesinde.
+     URL: https://final-project-w7ms.onrender.com
+     Env vars: `DATABASE_URL` (postgresql+asyncpg, internal), `REDIS_URL` (internal),
+     `FERNET_KEY`, `SECRET_KEY` (yeni üretilen prod anahtarları, lokaldekinden farklı).
+     Not: free Postgres 2026-07-11'de expire olacak (free tier 30 günlük süre),
+     teslime kadar sorun değil.
+   - Uçtan uca işlevsel test (canlıda) yapıldı: register → login → plan oluştur →
+     üye ekle → subscription ata → NFC credential ata → device oluştur (API key) →
+     `/verify` → `decision: GRANTED`, occupancy doğru (1/10). DB ve Redis canlıda
+     çalışıyor.
    - ~~`/verify` response time ölçümü + README~~ — Tamamlandı (2026-06-11). Lokal
      `docker-compose up` ile (Windows + Docker Desktop) ölçüldü: p50 ~215ms, p99 ~255ms,
      60 ardışık istek. README'deki "Performance" bölümü gerçek ölçümle güncellendi,
@@ -68,7 +77,68 @@
   (bkz. sohbet geçmişi).
 
 ## Sıradaki Oturumda Yapılacak İlk İş
-- Eksikler listesindeki tüm maddeler tamamlandı (Render deploy kullanıcı tercihiyle
-  şimdilik hariç). Render hesabı/repo durumu netleşince madde 5'in deploy kısmına
-  dönülecek.
-- (İsteğe bağlı) `docker compose up --build` ile imajın güncel kodla yeniden build edilmesi.
+- Eksikler listesindeki tüm maddeler tamamlandı. Render deploy canlı ve test edildi.
+- (İsteğe bağlı) `docker compose up --build` ile lokal imajın güncel kodla yeniden build edilmesi.
+- **Sırada: Frontend (AI ile, brief'e göre serbest).** Aşağıdaki plana göre devam edilecek.
+
+## Frontend Planı (henüz başlanmadı)
+
+Brief'e göre frontend'in göstermesi gereken minimum işlevler (Phase 2 şartı):
+member registration, QR code display, entry log viewing, real-time occupancy counter.
+Buna ek olarak admin login gerekiyor (çoğu endpoint JWT istiyor).
+
+**Tercihler (kullanıcı onayladı):**
+- Teknoloji: **Basit HTML/CSS/JS** (build aracı/framework yok)
+- Konum: bu repo içinde **`frontend/`** klasörü
+- Çalıştırma: **sadece local**, tarayıcıda dosya açarak (deploy gerekmez)
+- API adresi: canlı Render URL'i — `https://final-project-w7ms.onrender.com/api/v1`
+  (backend CORS `allow_origins=["*"]`, sorun olmaz)
+- Yapilan Tercihler icin kullaniciya bilgi verilecek.
+
+**Yapılacak dosyalar:**
+1. `frontend/index.html` — tek sayfa, bölümler:
+   - Login formu (admin email/password → `/api/v1/auth/login`, JWT'yi sakla)
+   - Üye kaydı formu (`POST /api/v1/members`)
+   - QR kod gösterimi (üye seç → `POST /members/{id}/credentials/qr` → base64 görsel)
+   - Giriş logları tablosu (`GET /api/v1/access-logs`)
+   - Doluluk sayacı (`GET /api/v1/occupancy`, `setInterval` ile periyodik güncelleme)
+2. `frontend/style.css` — sade görünüm
+3. `frontend/script.js` — fetch ile API çağrıları, JWT `localStorage`'da, form handler'lar, occupancy polling
+
+**Durum**: `frontend/index.html`, `frontend/style.css`, `frontend/script.js` oluşturuldu
+(2026-06-11). API base: Render canlı URL. Tarayıcıda test edildi: login, üye ekleme,
+QR oluşturma, doluluk sayacı çalışıyor.
+
+**Demo admin hesabı (Render canlı DB'de, /auth/register ile oluşturuldu)**:
+email `demo@gymgate.com`, şifre `DemoPass123!`, gym "GymGate Demo" (max kapasite 50).
+
+**Eklendi (2026-06-11, devam)**:
+- Üye ekleme formuna validasyon: ad/soyad sadece harf, telefon/acil durum
+  `+90XXXXXXXXXX` pattern, doğum tarihi geçmişte ve makul yaş aralığında.
+- Yeni bölüm: "Turnike Simülasyonu" — `html5-qrcode` (CDN) ile telefon kamerasından
+  QR okuyup `/verify`'a `X-API-Key` ile gönderiyor, GRANTED/DENIED sonucunu gösteriyor.
+  Bunun için bir demo gate device oluşturuldu (`POST /devices`), API key
+  `script.js` içinde `GATE_API_KEY` sabiti olarak saklanıyor (sadece demo amaçlı).
+
+**Test edildi (2026-06-11)**: `python -m http.server 5500` ile local server üzerinden
+(`localhost` kamera izni için gerekli) tüm akış uçtan uca denendi:
+login → üye ekle (validasyonlu) → plan oluştur → üyeye plan ata → üyelik durumu
+görüntüleme → QR oluştur → Turnike Simülasyonu (telefon kamerasıyla QR okutma) →
+GRANTED + occupancy/log güncellemesi. Hepsi çalışıyor.
+
+## Proje Durumu — Brief'teki minimum frontend gereksinimleri (Phase 2) tamam
+- [x] Admin login
+- [x] Member registration (validasyonlu)
+- [x] QR code display
+- [x] Entry log viewing
+- [x] Real-time occupancy counter
+- [x] (Bonus) Plan/subscription yönetimi ve üyelik durumu görüntüleme
+- [x] (Bonus) Turnike simülasyonu (kamera ile QR okuma + /verify)
+
+**Eklenebilecek ama brief'te zorunlu olmayan ekstra backend özellikleri** (gerekirse
+frontend'e eklenebilir): üye flag/unflag, NFC credential atama, gate device yönetimi
+(`/devices`), dashboard endpoint. Şu an kullanıcı onayı bekleniyor — istenirse eklenir.
+
+**Sıradaki iş**: Kullanıcı ile birlikte projenin sunum/teslim için yeterli olup
+olmadığına karar verilecek. Yeterliyse: README'nin frontend bölümünü güncellemek
+ve GATE_API_KEY'in demo amaçlı olduğunu not etmek kalan son adımlar olabilir.
