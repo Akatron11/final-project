@@ -66,6 +66,7 @@ async def run_verification(body: dict, device: GateDevice, db: AsyncSession) -> 
                 Credential.member_id == member_id,
                 Credential.gym_id == gym_id,
                 Credential.credential_type == "qr",
+                Credential.credential_value == credential_value,
                 Credential.is_active == True
             )
         )

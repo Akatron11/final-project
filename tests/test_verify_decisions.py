@@ -3,7 +3,9 @@ from datetime import date, timedelta
 import pytest
 from httpx import AsyncClient
 
+from app.models.credential import Credential
 from app.models.subscription import SubscriptionStatus
+from app.utils.encryption import encrypt_payload
 
 pytestmark = pytest.mark.asyncio
 
@@ -89,6 +91,44 @@ async def test_denied_already_inside(client: AsyncClient, seed, make_member):
     resp = await verify(client, seed["api_key"], credential_value, action="entry")
     assert resp.status_code == 200
     assert resp.json()["decision"] == "DENIED_ALREADY_INSIDE"
+
+
+async def test_old_qr_denied_after_regenerating(client: AsyncClient, seed, make_member, db):
+    member, _ = await make_member(seed, status=SubscriptionStatus.active)
+
+    old_qr = encrypt_payload(str(seed["gym"].id), str(member.id))
+    old_credential = Credential(
+        gym_id=seed["gym"].id,
+        member_id=member.id,
+        credential_type="qr",
+        credential_value=old_qr,
+    )
+    db.add(old_credential)
+    await db.flush()
+
+    # Simulate generating a new QR: old one is deactivated, a new active one is added
+    old_credential.is_active = False
+    new_qr = encrypt_payload(str(seed["gym"].id), str(member.id))
+    db.add(Credential(
+        gym_id=seed["gym"].id,
+        member_id=member.id,
+        credential_type="qr",
+        credential_value=new_qr,
+    ))
+    await db.commit()
+
+    resp = await client.post(
+        "/api/v1/verify",
+        headers={"X-API-Key": seed["api_key"]},
+        json={
+            "credential_type": "qr",
+            "credential_value": old_qr,
+            "gate_id": "GATE-A",
+            "action": "entry",
+        },
+    )
+    assert resp.status_code == 200
+    assert resp.json()["decision"] == "DENIED_UNKNOWN"
 
 
 async def test_exit_after_entry_then_denied_not_inside(client: AsyncClient, seed, make_member):
