@@ -35,13 +35,13 @@ I thought about MongoDB but there are too many relationships between the data, s
 
 ---
 
-## 3. Why SQLAlchemy and Alembic?
+## 3. Why SQLAlchemy?
 
-Instead of writing raw SQL, I decided to use **SQLAlchemy ORM**. For database migrations, I'll use **Alembic**.
+Instead of writing raw SQL, I decided to use **SQLAlchemy ORM**.
 
 - With SQLAlchemy I can define tables as Python classes — I can do CRUD operations without writing SQL
 - SQLAlchemy 2.0 supports async, which is important for working with FastAPI
-- With Alembic, when I change the database schema (like adding a new column), I can generate a migration file and run `alembic upgrade head` to update the database. No need to write ALTER TABLE statements manually.
+- Tables are created with `Base.metadata.create_all()` on startup. I initially planned to use Alembic for migrations, but for a project this size `create_all` was simpler and enough — there's only one schema change during development (adding the `is_inside` column), which I applied manually with `ALTER TABLE` on the production database.
 
 ---
 
@@ -140,24 +140,25 @@ I'll deploy the project on **Render.com**.
 ## 11. Project Folder Structure
 
 ```
-gymgate-backend/
+final-project-gym-system/
 ├── app/
 │   ├── main.py              # Main application file
 │   ├── config.py            # Settings (.env reading)
 │   ├── database.py          # Database connection
+│   ├── redis_client.py       # Redis connection
 │   ├── models/              # Database tables (SQLAlchemy)
 │   ├── schemas/             # Request/response schemas (Pydantic)
 │   ├── routers/             # API endpoints
 │   ├── services/            # Business logic
 │   ├── auth/                # JWT and API key stuff
 │   └── utils/               # Encryption, QR code generation
-├── alembic/                 # Database migration files
 ├── tests/                   # Tests
+├── frontend/                # Admin panel (HTML/CSS/JS)
+├── docs/                    # DECISIONS.md, api-contract.md, erd.dbml
 ├── docker-compose.yml
 ├── Dockerfile
 ├── requirements.txt
 ├── .env.example
-├── DECISIONS.md
 └── README.md
 ```
 
