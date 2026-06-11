@@ -142,3 +142,19 @@ frontend'e eklenebilir): üye flag/unflag, NFC credential atama, gate device yö
 **Sıradaki iş**: Kullanıcı ile birlikte projenin sunum/teslim için yeterli olup
 olmadığına karar verilecek. Yeterliyse: README'nin frontend bölümünü güncellemek
 ve GATE_API_KEY'in demo amaçlı olduğunu not etmek kalan son adımlar olabilir.
+
+**Eklendi (2026-06-11, devam)**: Eski/expired token sorunu giderildi. `index.html`'e
+header'a "Log Out" butonu eklendi (`#logout-btn`, başta `hidden`). `script.js`'e
+`apiFetch()` wrapper eklendi: admin JWT ile yapılan tüm `/members`, `/plans`,
+`/subscriptions`, `/credentials/qr`, `/access-logs`, `/occupancy` çağrıları artık
+bunun üzerinden gidiyor — 401 dönerse otomatik olarak `localStorage` temizlenip
+login ekranına dönülüyor ("Session expired" mesajı). `showLogin()` fonksiyonu da
+eklendi (logout + token temizleme + occupancy interval durdurma). `/verify` (gate
+simülasyonu, API key ile) bu wrapper'ı kullanmıyor, değişmedi.
+
+**Eklendi (2026-06-11, devam)**: Login ekranına "Register a new gym" linki ve yeni
+bir `#register-section` eklendi (`index.html`). Form, `POST /auth/register`'a
+(gym + admin bilgileri) istek atıyor — backend'de zaten mevcut olan endpoint
+kullanıldı, backend değişmedi. Başarılı kayıt sonrası otomatik login ekranına
+dönüyor. `script.js`'e register form handler ve login/register arası geçiş
+linkleri eklendi.

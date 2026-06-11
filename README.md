@@ -129,7 +129,8 @@ Every table has a `gym_id` column. All queries are automatically scoped to the a
 A simple HTML/CSS/JS admin panel lives in `frontend/` and talks directly to the
 live Render API (CORS is open). It covers:
 
-- Admin login (JWT stored in `localStorage`)
+- Registering a new gym + admin (`POST /auth/register`) and admin login (JWT
+  stored in `localStorage`), with a logout button
 - Member registration (with input validation)
 - Plan creation & assigning a plan/subscription to a member, viewing subscription status
 - QR code generation for a member
@@ -137,6 +138,9 @@ live Render API (CORS is open). It covers:
   (using [html5-qrcode](https://github.com/mebjas/html5-qrcode)) and calls
   `POST /verify` with a demo gate device API key, showing the GRANTED/DENIED result
 - Access log table and a real-time occupancy counter (polled every 5s)
+
+If the stored JWT expires (1-hour expiry), the admin requests automatically log
+the user out and return to the login screen with a "Session expired" message.
 
 **Running it:** the QR scanner needs camera access, which browsers only allow on
 `https://` or `localhost`. Serve the folder locally instead of opening the file directly:
@@ -146,6 +150,10 @@ cd frontend
 python -m http.server 5500
 # open http://localhost:5500/index.html
 ```
+
+> Note: `GATE_API_KEY` in `frontend/script.js` is a demo gate device API key
+> created for this project's demo gym, used only for the gate simulator. It is
+> not a secret credential for the deployed system as a whole.
 
 ## Running Tests
 

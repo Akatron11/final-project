@@ -8,6 +8,7 @@ const app = document.getElementById("app");
 const loginStatus = document.getElementById("login-status");
 const loginForm = document.getElementById("login-form");
 const loginMessage = document.getElementById("login-message");
+const logoutBtn = document.getElementById("logout-btn");
 
 let occupancyInterval = null;
 
@@ -22,6 +23,7 @@ function authHeaders() {
 function showApp() {
   loginSection.classList.add("hidden");
   app.classList.remove("hidden");
+  logoutBtn.classList.remove("hidden");
   loginStatus.textContent = "Logged in";
   loadMembers();
   loadPlans();
@@ -30,6 +32,95 @@ function showApp() {
   if (!occupancyInterval) {
     occupancyInterval = setInterval(loadOccupancy, 5000);
   }
+}
+
+function showLogin() {
+  if (occupancyInterval) {
+    clearInterval(occupancyInterval);
+    occupancyInterval = null;
+  }
+  localStorage.removeItem("access_token");
+  localStorage.removeItem("gym_id");
+  app.classList.add("hidden");
+  logoutBtn.classList.add("hidden");
+  loginSection.classList.remove("hidden");
+  loginStatus.textContent = "";
+}
+
+logoutBtn.addEventListener("click", showLogin);
+
+// Register new gym + admin
+const registerSection = document.getElementById("register-section");
+const registerForm = document.getElementById("register-form");
+const registerMessage = document.getElementById("register-message");
+const showRegisterLink = document.getElementById("show-register-link");
+const showLoginLink = document.getElementById("show-login-link");
+
+showRegisterLink.addEventListener("click", (e) => {
+  e.preventDefault();
+  loginSection.classList.add("hidden");
+  registerSection.classList.remove("hidden");
+});
+
+showLoginLink.addEventListener("click", (e) => {
+  e.preventDefault();
+  registerSection.classList.add("hidden");
+  loginSection.classList.remove("hidden");
+});
+
+registerForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const body = {
+    gym_name: document.getElementById("reg-gym-name").value,
+    gym_address: document.getElementById("reg-gym-address").value,
+    gym_phone: document.getElementById("reg-gym-phone").value,
+    gym_email: document.getElementById("reg-gym-email").value,
+    gym_max_capacity: parseInt(document.getElementById("reg-gym-capacity").value, 10),
+    admin_full_name: document.getElementById("reg-admin-name").value,
+    admin_email: document.getElementById("reg-admin-email").value,
+    admin_password: document.getElementById("reg-admin-password").value
+  };
+
+  try {
+    const res = await fetch(`${API_BASE}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      registerMessage.textContent = data.detail || "Could not register gym";
+      registerMessage.className = "error";
+      return;
+    }
+
+    registerMessage.textContent = "Gym registered! You can now log in.";
+    registerMessage.className = "success";
+    registerForm.reset();
+    document.getElementById("reg-gym-capacity").value = 100;
+
+    setTimeout(() => {
+      registerSection.classList.add("hidden");
+      loginSection.classList.remove("hidden");
+      registerMessage.textContent = "";
+    }, 1500);
+  } catch (err) {
+    registerMessage.textContent = "Could not connect to server";
+    registerMessage.className = "error";
+  }
+});
+
+// Wrapper around fetch that logs out automatically if the token is rejected
+async function apiFetch(url, options = {}) {
+  const res = await fetch(url, options);
+  if (res.status === 401) {
+    showLogin();
+    loginMessage.textContent = "Session expired, please log in again";
+    loginMessage.className = "error";
+  }
+  return res;
 }
 
 // On page load, check if already logged in
@@ -97,7 +188,7 @@ memberForm.addEventListener("submit", async (e) => {
   };
 
   try {
-    const res = await fetch(`${API_BASE}/members`, {
+    const res = await apiFetch(`${API_BASE}/members`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...authHeaders() },
       body: JSON.stringify(body)
@@ -127,7 +218,7 @@ async function loadMembers() {
   selects.forEach((s) => (s.innerHTML = ""));
 
   try {
-    const res = await fetch(`${API_BASE}/members`, {
+    const res = await apiFetch(`${API_BASE}/members`, {
       headers: authHeaders()
     });
     const data = await res.json();
@@ -152,7 +243,7 @@ async function loadPlans() {
   select.innerHTML = "";
 
   try {
-    const res = await fetch(`${API_BASE}/plans`, {
+    const res = await apiFetch(`${API_BASE}/plans`, {
       headers: authHeaders()
     });
     const data = await res.json();
@@ -184,7 +275,7 @@ planForm.addEventListener("submit", async (e) => {
   };
 
   try {
-    const res = await fetch(`${API_BASE}/plans`, {
+    const res = await apiFetch(`${API_BASE}/plans`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...authHeaders() },
       body: JSON.stringify(body)
@@ -229,7 +320,7 @@ subscriptionForm.addEventListener("submit", async (e) => {
   }
 
   try {
-    const res = await fetch(`${API_BASE}/members/${memberId}/subscriptions`, {
+    const res = await apiFetch(`${API_BASE}/members/${memberId}/subscriptions`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...authHeaders() },
       body: JSON.stringify(body)
@@ -261,7 +352,7 @@ statusCheckBtn.addEventListener("click", async () => {
   subscriptionStatus.textContent = "Loading...";
 
   try {
-    const res = await fetch(`${API_BASE}/members/${memberId}/subscriptions`, {
+    const res = await apiFetch(`${API_BASE}/members/${memberId}/subscriptions`, {
       headers: authHeaders()
     });
     const data = await res.json();
@@ -294,7 +385,7 @@ qrGenerateBtn.addEventListener("click", async () => {
   qrResult.innerHTML = "Generating...";
 
   try {
-    const res = await fetch(`${API_BASE}/members/${memberId}/credentials/qr`, {
+    const res = await apiFetch(`${API_BASE}/members/${memberId}/credentials/qr`, {
       method: "POST",
       headers: authHeaders()
     });
@@ -320,7 +411,7 @@ async function loadLogs() {
   tbody.innerHTML = "";
 
   try {
-    const res = await fetch(`${API_BASE}/access-logs`, {
+    const res = await apiFetch(`${API_BASE}/access-logs`, {
       headers: authHeaders()
     });
     const data = await res.json();
@@ -347,7 +438,7 @@ async function loadOccupancy() {
   const text = document.getElementById("occupancy-text");
 
   try {
-    const res = await fetch(`${API_BASE}/occupancy`, {
+    const res = await apiFetch(`${API_BASE}/occupancy`, {
       headers: authHeaders()
     });
     const data = await res.json();
