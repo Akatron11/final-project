@@ -277,6 +277,8 @@ This is the most critical endpoint in the project. The gate device sends a reque
 | `inactive` | Member is inactive |
 | `capacity_full` | Gym is full |
 | `no_subscription` | No active subscription |
+| `already_inside` | Member tried to enter again without exiting first |
+| `not_inside` | Member tried to exit without having entered |
 
 ---
 

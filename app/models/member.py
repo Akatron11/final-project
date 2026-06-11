@@ -20,6 +20,7 @@ class Member(Base):
     photo_url = Column(String(500))
     is_active = Column(Boolean, default=True)
     is_flagged = Column(Boolean, default=False)
+    is_inside = Column(Boolean, default=False, nullable=False)
     flag_reason = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

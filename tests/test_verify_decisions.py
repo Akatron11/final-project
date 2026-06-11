@@ -78,3 +78,28 @@ async def test_denied_frozen(client: AsyncClient, seed, make_member):
 
     assert resp.status_code == 200
     assert resp.json()["decision"] == "DENIED_FROZEN"
+
+
+async def test_denied_already_inside(client: AsyncClient, seed, make_member):
+    _, credential_value = await make_member(seed, status=SubscriptionStatus.active)
+
+    resp = await verify(client, seed["api_key"], credential_value, action="entry")
+    assert resp.json()["decision"] == "GRANTED"
+
+    resp = await verify(client, seed["api_key"], credential_value, action="entry")
+    assert resp.status_code == 200
+    assert resp.json()["decision"] == "DENIED_ALREADY_INSIDE"
+
+
+async def test_exit_after_entry_then_denied_not_inside(client: AsyncClient, seed, make_member):
+    _, credential_value = await make_member(seed, status=SubscriptionStatus.active)
+
+    resp = await verify(client, seed["api_key"], credential_value, action="entry")
+    assert resp.json()["decision"] == "GRANTED"
+
+    resp = await verify(client, seed["api_key"], credential_value, action="exit")
+    assert resp.json()["decision"] == "GRANTED"
+
+    resp = await verify(client, seed["api_key"], credential_value, action="exit")
+    assert resp.status_code == 200
+    assert resp.json()["decision"] == "DENIED_NOT_INSIDE"

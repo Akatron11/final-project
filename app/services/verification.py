@@ -145,7 +145,17 @@ async def run_verification(body: dict, device: GateDevice, db: AsyncSession) -> 
         await write_log(AccessDecision.DENIED_FROZEN, member_id=member_id)
         return {"decision": "DENIED_FROZEN", "scanned_at": now}
 
-    # Step 5: GRANTED — update Redis occupancy counter
+    # Step 5: Anti-passback — check member's current inside/outside state
+
+    if action == "entry" and member.is_inside:
+        await write_log(AccessDecision.DENIED_ALREADY_INSIDE, member_id=member_id)
+        return {"decision": "DENIED_ALREADY_INSIDE", "scanned_at": now}
+
+    if action == "exit" and not member.is_inside:
+        await write_log(AccessDecision.DENIED_NOT_INSIDE, member_id=member_id)
+        return {"decision": "DENIED_NOT_INSIDE", "scanned_at": now}
+
+    # Step 6: GRANTED — update Redis occupancy counter
 
     redis = get_redis()
     key = f"gym:{gym_id}:occupancy"
@@ -173,6 +183,7 @@ async def run_verification(body: dict, device: GateDevice, db: AsyncSession) -> 
     gym_result = await db.execute(select(Gym).where(Gym.id == gym_id))
     gym = gym_result.scalar_one_or_none()
 
+    member.is_inside = (action == "entry")
     await write_log(AccessDecision.GRANTED, member_id=member_id)
 
     return {

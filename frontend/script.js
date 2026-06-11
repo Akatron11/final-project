@@ -237,6 +237,9 @@ async function loadMembers() {
   }
 }
 
+// Plan id -> plan object, used to show plan names in subscription history
+let plansById = {};
+
 // Load plans into the subscription plan dropdown
 async function loadPlans() {
   const select = document.getElementById("sub-plan-select");
@@ -248,6 +251,9 @@ async function loadPlans() {
     });
     const data = await res.json();
     const plans = data.items || data;
+
+    plansById = {};
+    plans.forEach((p) => { plansById[p.id] = p; });
 
     plans.forEach((p) => {
       const option = document.createElement("option");
@@ -363,12 +369,18 @@ statusCheckBtn.addEventListener("click", async () => {
       return;
     }
 
-    const latest = subs[0];
-    subscriptionStatus.innerHTML = `
-      Status: <strong>${latest.status}</strong><br>
-      Start: ${latest.start_date}<br>
-      End: ${latest.end_date}
-    `;
+    subscriptionStatus.innerHTML = subs.map((sub) => {
+      const plan = plansById[sub.plan_id];
+      const planName = plan ? plan.name : "Unknown plan";
+      return `
+        <div class="subscription-record">
+          Plan: <strong>${planName}</strong><br>
+          Status: <strong>${sub.status}</strong><br>
+          Start: ${sub.start_date}<br>
+          End: ${sub.end_date}
+        </div>
+      `;
+    }).join("<hr>");
   } catch (err) {
     subscriptionStatus.textContent = "Could not load subscription info";
   }

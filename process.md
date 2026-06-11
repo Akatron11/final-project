@@ -143,6 +143,44 @@ frontend'e eklenebilir): üye flag/unflag, NFC credential atama, gate device yö
 olmadığına karar verilecek. Yeterliyse: README'nin frontend bölümünü güncellemek
 ve GATE_API_KEY'in demo amaçlı olduğunu not etmek kalan son adımlar olabilir.
 
+## Açık Konu: Anti-passback (aynı QR art arda "entry" okutulması)
+
+**Sorun**: Aynı üyenin QR'ı art arda `action: "entry"` ile okutulduğunda, backend
+üyenin "içeride mi" durumunu hiç takip etmediği için her seferinde GRANTED dönüyor,
+Redis occupancy `INCR` ediliyor ve `visits_this_month` artıyor. Bu, brief/contract'ta
+açıkça tanımlı değil (contract sadece `action` alanını body'den alıp güveniyor).
+
+**Tartışılan çözüm (henüz uygulanmadı, kullanıcı onayı bekleniyor)**:
+- `Member` modeline `is_inside: bool` (default `false`) kolonu eklenir (migration gerekir).
+- `/verify`'da:
+  - `action: "entry"` + `is_inside == true` → yeni decision `DENIED_ALREADY_INSIDE`,
+    occupancy/visits artmaz.
+  - `action: "exit"` + `is_inside == false` → yeni decision `DENIED_NOT_INSIDE`.
+  - Normal durumlarda GRANTED sonrası `is_inside` güncellenir.
+- `AccessDecision` enum'ına 2 yeni değer + `docs/api-contract.md` güncellemesi gerekir.
+
+**Karar**: Eklenmesine karar verildi, uygulandı (2026-06-11).
+- `app/models/member.py`: `is_inside` (Boolean, default False, nullable=False) eklendi.
+- `app/models/access_log.py`: `AccessDecision` enum'ına `DENIED_ALREADY_INSIDE` ve
+  `DENIED_NOT_INSIDE` eklendi.
+- `app/services/verification.py`: subscription kontrollerinden sonra, occupancy
+  güncellemesinden önce anti-passback kontrolü eklendi (`action: entry` + zaten
+  içerideyse → `DENIED_ALREADY_INSIDE`; `action: exit` + zaten dışarıdaysa →
+  `DENIED_NOT_INSIDE`). GRANTED durumunda `member.is_inside` güncelleniyor.
+- `docs/api-contract.md`: yeni decision/reason'lar tabloya eklendi
+  (`already_inside`, `not_inside`).
+- `tests/test_verify_decisions.py`: 2 yeni test eklendi (`test_denied_already_inside`,
+  `test_exit_after_entry_then_denied_not_inside`). Toplam 14/14 test geçiyor.
+
+**ÖNEMLİ — Render canlı DB için not**: Backend migration olarak Alembic kullanmıyor,
+tablo `Base.metadata.create_all` ile oluşturuluyor — bu, **var olan tabloya yeni
+kolon eklemez**. Render'daki Postgres'te `members` tablosu zaten var, bu yüzden
+deploy sonrası `is_inside` kolonu eksik kalacak ve hata verecektir. Deploy öncesi
+ya Render Postgres'teki `members` tablosuna manuel
+`ALTER TABLE members ADD COLUMN is_inside BOOLEAN NOT NULL DEFAULT false;`
+çalıştırılmalı, ya da (test verisi önemli değilse) tablo drop edilip
+`create_all`'un yeniden oluşturmasına izin verilmeli. Bu adım henüz yapılmadı.
+
 **Eklendi (2026-06-11, devam)**: Eski/expired token sorunu giderildi. `index.html`'e
 header'a "Log Out" butonu eklendi (`#logout-btn`, başta `hidden`). `script.js`'e
 `apiFetch()` wrapper eklendi: admin JWT ile yapılan tüm `/members`, `/plans`,
