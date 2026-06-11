@@ -143,6 +143,19 @@ frontend'e eklenebilir): üye flag/unflag, NFC credential atama, gate device yö
 olmadığına karar verilecek. Yeterliyse: README'nin frontend bölümünü güncellemek
 ve GATE_API_KEY'in demo amaçlı olduğunu not etmek kalan son adımlar olabilir.
 
+## Frontend Deploy (2026-06-11) — Tamamlandı
+
+Hoca frontend'in de deploy edilmesini istedi. Render Static Site olarak deploy edildi:
+- Repo: `Akatron11/final-project`, branch `main`, Root Directory: `frontend`
+- Build Command: boş, Publish Directory: `.` (Root Directory'ye göre relative)
+- URL: https://final-project-1-ojqp.onrender.com/
+- Backend `API_BASE` zaten Render canlı backend'e işaret ediyor, CORS `*`
+  olduğu için ek değişiklik gerekmedi.
+- Test edildi: başka bir bilgisayardan erişim sağlandı, demo hesapla
+  (`demo@gymgate.com` / `DemoPass123!`) login başarılı.
+
+**Kalan iş**: README'ye frontend canlı URL'inin eklenmesi (istenirse).
+
 ## Açık Konu: Anti-passback (aynı QR art arda "entry" okutulması)
 
 **Sorun**: Aynı üyenin QR'ı art arda `action: "entry"` ile okutulduğunda, backend

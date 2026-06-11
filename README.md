@@ -3,6 +3,7 @@
 Backend API for a smart gym access control and member management system. Gate devices scan QR codes or NFC tags and receive a grant/deny decision in under 200ms.
 
 **Live API:** https://final-project-w7ms.onrender.com/docs
+**Live Frontend:** https://final-project-1-ojqp.onrender.com/
 
 ## Tech Stack
 
@@ -127,7 +128,8 @@ Every table has a `gym_id` column. All queries are automatically scoped to the a
 ## Frontend (Demo)
 
 A simple HTML/CSS/JS admin panel lives in `frontend/` and talks directly to the
-live Render API (CORS is open). It covers:
+live Render API (CORS is open). It is deployed as a Render Static Site at
+https://final-project-1-ojqp.onrender.com/. It covers:
 
 - Registering a new gym + admin (`POST /auth/register`) and admin login (JWT
   stored in `localStorage`), with a logout button
@@ -143,7 +145,9 @@ If the stored JWT expires (1-hour expiry), the admin requests automatically log
 the user out and return to the login screen with a "Session expired" message.
 
 **Running it:** the QR scanner needs camera access, which browsers only allow on
-`https://` or `localhost`. Serve the folder locally instead of opening the file directly:
+`https://` or `localhost`. The deployed version above already runs on `https://`,
+so the gate simulator works there directly. To run it locally instead, serve the
+folder instead of opening the file directly:
 
 ```bash
 cd frontend
